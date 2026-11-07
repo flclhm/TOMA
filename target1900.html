@@ -107,6 +107,43 @@
       return res.toISOString().slice(0, 10);
     }
 
+    // ポイントからスマホ時間（分）と現在の換算率（%）を計算する関数（逓減ブラケット）
+    function pointsToMinutesInfo(points) {
+      if (!points || points <= 0) return { minutes: 0, displayMin: "0", currentRate: 100 };
+
+      // [獲得時間の上限増分(分), 1ptあたりの分数(レート)]
+      const stages = [
+        { maxMin: 30, rate: 1.0 }, // 0〜30分: 100% (30pt必要)
+        { maxMin: 15, rate: 0.9 }, // 30〜45分: 90% (16.67pt必要)
+        { maxMin: 15, rate: 0.8 }, // 45〜60分: 80% (18.75pt必要)
+        { maxMin: 20, rate: 0.5 }, // 60〜80分: 50% (40pt必要)
+        { maxMin: 20, rate: 0.3 }, // 80〜100分: 30% (66.67pt必要)
+        { maxMin: 20, rate: 0.2 }, // 100〜120分: 20% (100pt必要)
+        { maxMin: Infinity, rate: 0.1 } // 120分以上: 10% (10ptで1分)
+      ];
+
+      let remPoints = points;
+      let totalMinutes = 0.0;
+      let currentRate = 100;
+
+      for (const stage of stages) {
+        if (remPoints <= 0) break;
+        const maxPtsForStage = stage.maxMin / stage.rate;
+        const takePts = Math.min(remPoints, maxPtsForStage);
+
+        totalMinutes += takePts * stage.rate;
+        remPoints -= takePts;
+        currentRate = Math.round(stage.rate * 100);
+      }
+
+      return {
+        minutes: Math.floor(totalMinutes),
+        displayMin: totalMinutes.toFixed(1),
+        currentRate: currentRate
+      };
+    }
+
+
     // ローカルストレージの初期化・読み込み
     function loadAppData() {
       const defaultData = {
@@ -370,7 +407,7 @@
               <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#e53e3e', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 ⚡ {todayStats.points} <span style={{ fontSize: '14px', color: '#4a5568' }}>pt</span>
                 <span style={{ fontSize: '12px', background: '#feebc8', color: '#c05621', padding: '2px 6px', borderRadius: '4px', marginLeft: '6px' }}>
-                  ≈ {todayStats.points * (appData.exchangeRate || 1)}分
+                  ≈ {pointsToMinutesInfo(todayStats.points).displayMin}分 (効率{pointsToMinutesInfo(todayStats.points).currentRate}%)
                 </span>
               </div>
             </div>
@@ -388,12 +425,16 @@
               <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', color: '#2d3748' }}>📈 学習記録＆スマホ交換</h3>
               
               <div style={{ background: '#f7fafc', padding: '16px', borderRadius: '12px', marginBottom: '16px' }}>
-                <div style={{ fontSize: '14px', color: '#4a5568', marginBottom: '6px' }}>スマホ利用時間ルール:</div>
+                <div style={{ fontSize: '14px', color: '#4a5568', marginBottom: '6px' }}>スマホ利用時間ルール（時間逓減制）:</div>
                 <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#2b6cb0' }}>
-                  1ポイント ＝ 1分 （本日 {todayStats.points} 分 獲得中）
+                  本日: {todayStats.points} pt ➔ 約 {pointsToMinutesInfo(todayStats.points).displayMin} 分
                 </div>
-                <div style={{ fontSize: '12px', color: '#a0aec0', marginTop: '4px' }}>
-                  ※1単語につき1日最大1ptまで獲得可能
+                <div style={{ fontSize: '12px', color: '#4a5568', marginTop: '8px', lineHeight: '1.5' }}>
+                  ・〜30分: 100% (1pt=1分)<br/>
+                  ・〜45分: 90% ／ 〜60分: 80%<br/>
+                  ・〜80分: 50% ／ 〜100分: 30%<br/>
+                  ・〜120分: 20% ／ 120分超: 10%<br/>
+                  <span style={{ color: '#e53e3e', fontWeight: 'bold' }}>現在の換算レート: {pointsToMinutesInfo(todayStats.points).currentRate}%</span>
                 </div>
               </div>
 
@@ -405,7 +446,7 @@
                   {Object.keys(appData.dailyStats).sort().reverse().slice(0, 5).map(dateKey => (
                     <div key={dateKey} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: dateKey === today ? '#e6fffa' : '#edf2f7', borderRadius: '8px', fontSize: '13px' }}>
                       <span style={{ fontWeight: dateKey === today ? 'bold' : 'normal' }}>{dateKey} {dateKey === today ? '(今日)' : ''}</span>
-                      <span style={{ fontWeight: 'bold', color: '#e53e3e' }}>{appData.dailyStats[dateKey].points} pt ({appData.dailyStats[dateKey].rewardedWords?.length || 0}語)</span>
+                      <span style={{ fontWeight: 'bold', color: '#e53e3e' }}>{appData.dailyStats[dateKey].points} pt (≈{pointsToMinutesInfo(appData.dailyStats[dateKey].points).displayMin}分)</span>
                     </div>
                   ))}
                 </div>
