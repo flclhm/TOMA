@@ -116,13 +116,13 @@
 
       // [獲得時間の上限増分(分), 1ptあたりの分数(レート)]
       const stages = [
-        { maxMin: 30, rate: 1.0 }, // 0〜30分: 100% (30pt必要)
-        { maxMin: 15, rate: 0.9 }, // 30〜45分: 90% (16.67pt必要)
-        { maxMin: 15, rate: 0.8 }, // 45〜60分: 80% (18.75pt必要)
+        { maxMin: 20, rate: 1.0 }, // 0〜20分: 100% (20pt必要)
+        { maxMin: 20, rate: 0.8 }, // 20〜40分: 80% (25pt必要)
+        { maxMin: 20, rate: 0.6 }, // 40〜60分: 60% (33.33pt必要)
         { maxMin: 20, rate: 0.5 }, // 60〜80分: 50% (40pt必要)
-        { maxMin: 20, rate: 0.3 }, // 80〜100分: 30% (66.67pt必要)
-        { maxMin: 20, rate: 0.2 }, // 100〜120分: 20% (100pt必要)
-        { maxMin: Infinity, rate: 0.1 } // 120分以上: 10% (10ptで1分)
+        { maxMin: 20, rate: 0.4 }, // 80〜100分: 40% (50pt必要)
+        { maxMin: 20, rate: 0.3 }, // 100〜120分: 30% (66.67pt必要)
+        { maxMin: Infinity, rate: 0.2 } // 120分以上: 20% (5ptで1分)
       ];
 
       let remPoints = points;
@@ -451,10 +451,10 @@
                   本日: {todayStats.points} pt ➔ 約 {pointsToMinutesInfo(todayStats.points).displayMin} 分
                 </div>
                 <div style={{ fontSize: '12px', color: '#4a5568', marginTop: '8px', lineHeight: '1.5' }}>
-                  ・〜30分: 100% (1pt=1分)<br/>
-                  ・〜45分: 90% ／ 〜60分: 80%<br/>
-                  ・〜80分: 50% ／ 〜100分: 30%<br/>
-                  ・〜120分: 20% ／ 120分超: 10%<br/>
+                  ・〜20分: 100% (1pt=1分)<br/>
+                  ・〜40分: 80% ／ 〜60分: 60%<br/>
+                  ・〜80分: 50% ／ 〜100分: 40%<br/>
+                  ・〜120分: 30% ／ 120分超: 20%<br/>
                   <span style={{ color: '#e53e3e', fontWeight: 'bold' }}>現在の換算レート: {pointsToMinutesInfo(todayStats.points).currentRate}%</span>
                 </div>
               </div>
